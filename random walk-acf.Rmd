@@ -1,0 +1,38 @@
+---
+title: "Random Walk-simulation"
+author: "Jay Kim"
+date: "February 24, 2020"
+output:
+  word_document: default
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+### Random Walk
+#if {Xt} is random wlak with {Xt-1} + Zt where Zt ~N(0,1) t=2:1000
+# Xt = Xt-1 + Zt
+
+# generate the function 
+x=NULL
+x[1]=0 # since X1 = 0
+for(i in 2:1000){
+  x[i]= x[i-1] +rnorm(1)
+}
+```
+
+```{r}
+#put x to be time series and plot
+randomwalk <- ts(x)
+plot(randomwalk, main = "Random Walk", col= "green")
+```
+
+```{r}
+#plot the acf function
+acf(randomwalk) # as you can see ACF slowly decay and tells it's non-stationary
+```
+
