@@ -1,1 +1,11 @@
-sapply(CSEdataAveGPA,function(x){sum(is.na(x)/length(x)*100)} )
+pMISS <- function(x){sum(is.na(x))/length(x)*100}
+get.n.Tiers <- function(x) length(unique(x$APPLICANT_TIER))
+get.n.Tiers(aveGPANB) # give you 5
+n.Tiers <- c(1:5)
+daply(aveGPANB, .(ETHNICITY), function(x) length(unique(x$ENTRY_PROGRAM)))
+## repeated modeling
+model <- function(x){
+  naive_bayes(aveGPAInd~., data=aveGPANB)
+}
+
+fitted.na.model <- dlply(aveGPANB, .(APPLICANT_TIER,ENTRY_COLLEGE), model) # all tiers and colleges
