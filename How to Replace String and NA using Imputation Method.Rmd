@@ -1,0 +1,119 @@
+---
+title: "Replacing String and NA"
+author: "JS"
+date: "10/12/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Replacing stirng in r
+
+Using library tidyverse and stringr
+Import excel file from 
+library(readxl)
+CSE_Analysis_Full_Data_2020_Cohort_missing_hrs_ap_10_9 <- read_excel("C:/Users/jsparks3/Downloads/CSE Analysis Full Data 2020 Cohort missing hrs_ap 10-9.xlsx")
+myup2020 = CSE_Analysis_Full_Data_2020_Cohort_missing_hrs_ap_10_9 
+
+This data included 21 NAs
+```{r myup2020}
+ library(readxl)
+CSE_Analysis_Full_Data_2020_Cohort_missing_hrs_ap_10_9 <- read_excel("CSE Analysis Full Data 2020 Cohort missing hrs_ap 10-9.xlsx",na="")
+myup2020 <- CSE_Analysis_Full_Data_2020_Cohort_missing_hrs_ap_10_9
+library(Hmisc)
+Hmisc::describe(myup2020[, 9:20])
+```
+## Histogram for GPA high school
+```{r}
+myup2020$GPA_HIGHSCHOOL <- as.numeric(myup2020$GPA_HIGHSCHOOL)
+hist(myup2020$GPA_HIGHSCHOOL)
+```
+
+## Including GPA High School Plots
+
+You can also embed plots, for example:
+
+```{r myup2020 plot for High school GPA, echo=FALSE}
+library(ggplot2)
+library(dplyr)
+meanHSGPA1 <- myup2020 %>% 
+  group_by(ENTRY_COLLEGE) %>% 
+  summarise(meanHSGPA=mean(GPA_HIGHSCHOOL, na.rm = TRUE),CFTIC=n(), .groups="drop")
+meanHSGPA1
+Countabove4.00 <- myup2020 %>% filter(GPA_HIGHSCHOOL >= 4.00) %>% 
+  group_by(ENTRY_COLLEGE) %>% 
+  summarise(meanHS =n() );Countabove4.00
+ggplot(meanHSGPA1, aes( x=ENTRY_COLLEGE, y=meanHSGPA, col=ENTRY_COLLEGE))+geom_point(size=5)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##Replace Gender F and M for Female and Male with two differenct ways
+### Replace NA for zero values for numerical columns
+```{r}
+library(stringr)
+library(dplyr)
+unique(myup2020$GENDER)
+myup2020$GENDER <- str_replace_all( myup2020$GENDER,"Female","F")
+myup2020$GENDER <- str_replace_all( myup2020$GENDER,"Male","M")
+unique(myup2020$GENDER)
+myup2020$GENDER <- str_replace_all(myup2020$GENDER, c("F"="Female", "M"="Male"))
+unique(myup2020$GENDER)
+myup2020$GENDER <- str_replace_na(myup2020$GENDER, "NA")
+unique(myup2020$GENDER)
+myup2020$GENDER <- ifelse(myup2020$GENDER == "Female", "F", ifelse(myup2020$GENDER=="Male","M", NA))
+unique(myup2020$GENDER)
+unique(myup2020$GPA_HIGHSCHOOL)
+sum(is.na(myup2020$GPA_HIGHSCHOOL))
+myup2020$GPA_HIGHSCHOOL[is.na(myup2020$GPA_HIGHSCHOOL)] <- 0
+sum(is.na(myup2020$GPA_HIGHSCHOOL))
+
+myup2020NAomit <- myup2020 %>% 
+  select(ENTRY_COLLEGE,ENTRY_PROGRAM,GENDER,COUNTY,COUNTY_GROUP,GPA_HIGHSCHOOL,APPLICANT_TIER,HIGH_SCHOOL_NAME,
+        ACT_PROPORTION,SAT_PROPORTION)
+myup2020NAomit$GPA_HIGHSCHOOL <- na_if(myup2020NAomit$GPA_HIGHSCHOOL,0)
+myup2020NAomit$GPA_HIGHSCHOOL <- as.numeric(myup2020NAomit$GPA_HIGHSCHOOL)
+
+unique(myup2020NAomit$APPLICANT_TIER)
+
+sapply(myup2020NAomit, function(x){sum(is.na(x))*100/length(x)})
+
+```
+## Na Imputation Methods (Used as regressions and range)
+Red plot shows the proportion of NA and yellow shows that your imputation still have some NA and this means
+the imputations using variables could not be applied to thoses observations
+```{r}
+library(mice)
+library(VIM)
+myup2020NAomit2 <- myup2020NAomit %>% 
+  select(GPA_HIGHSCHOOL,APPLICANT_TIER,ACT_PROPORTION) ;glimpse(myup2020NAomit2)
+myup2020NAomit2$GPA_HIGHSCHOOL <- as.numeric(gsub("\\.","",myup2020NAomit2$GPA_HIGHSCHOOL))
+myup2020NAomit2$APPLICANT_TIER <- as.numeric(gsub("\\.","",myup2020NAomit2$APPLICANT_TIER))
+myup2020NAomit2$ACT_PROPORTION <- as.numeric(gsub("\\.","",myup2020NAomit2$ACT_PROPORTION))
+
+
+md.pattern(myup2020NAomit2)
+md.pairs(myup2020NAomit2)
+marginplot(myup2020NAomit2[, c("APPLICANT_TIER","GPA_HIGHSCHOOL")])
+myup2020NAomit2$APPLICANT_TIER <- log(myup2020NAomit2$APPLICANT_TIER)
+myup2020NAomit2$GPA_HIGHSCHOOL <- as.numeric(myup2020NAomit2$GPA_HIGHSCHOOL)
+myup2020NAomit2$GPA_HIGHSCHOOL <- log(myup2020NAomit2$GPA_HIGHSCHOOL)
+aggr(myup2020NAomit2)
+imp_regression <- regressionImp(GPA_HIGHSCHOOL ~ ACT_PROPORTION+APPLICANT_TIER, myup2020NAomit2)
+imp_ranger <- rangerImpute(GPA_HIGHSCHOOL~ACT_PROPORTION+APPLICANT_TIER, myup2020NAomit2)
+aggr(imp_regression, delimiter = "_imp")
+aggr(imp_ranger, delimiter = "_imp")
+imp_regression[ , c("GPA_HIGHSCHOOL", "APPLICANT_TIER","GPA_HIGHSCHOOL_imp")] %>% 
+  marginplot(delimiter = "_imp")
+marginplot(kNN(log10(myup2020NAomit2[,c("APPLICANT_TIER","GPA_HIGHSCHOOL")])),delimiter="_imp")
+imputeHS <- mice(myup2020NAomit[, c("APPLICANT_TIER","GPA_HIGHSCHOOL","ACT_PROPORTION"),m=3,seed=123])
+imputeHS$imp$GPA_HIGHSCHOOL
+myup2020NAomit[752:759,"ACT_PROPORTION"]
+myup2020NAomitNEW <- complete(imputeHS, 4);colnames(myup2020NAomitNEW) <- c("NewTier","NewGPAHS","NewACT")
+myup2020NAomitNEWOLD <- cbind(myup2020NAomit,myup2020NAomitNEW);glimpse(myup2020NAomitNEWOLD)
+```
+
+
