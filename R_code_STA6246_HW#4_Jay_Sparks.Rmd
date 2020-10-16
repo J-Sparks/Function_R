@@ -1,0 +1,126 @@
+---
+title: "STA6246 Assignment4_Jay_Sparks"
+output:
+  word_document: default
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+### Q1
+```{r}
+# create data.frame
+# response = The number of molds of the algae = NMA
+# columns = five levels of PH = PH = 1:5
+# Greek letters = five levels of temperature = Temp
+# rows = vessels = vess = 1:5
+# Latin letters = algae types = Type
+NMA <- c(57,55,74,17,30,47,43,14,31,70,60,38,56,47,17,40,23,26,61,70,19,71,54,23,44)
+vess = gl(n = 5,k=1,length = 25,c(1:5))
+PH = gl(n = 5,k=5,length = 25,c(1:5))
+Temp <- c( "C","B","E","A","D", 
+          "D","C","A","B","E", 
+          "E","D","B","C","A", 
+          "B","A","D","E","C", 
+          "A","E","C","D","B")
+Type <- c( "O","P","Q","R","S", 
+           "R","Q","O","S","P", 
+           "S","O","R","P","Q", 
+           "Q","S","P","O","R", 
+           "P","R","S","Q","O") #using O:S for Latin letters
+
+GLSDdata <- data.frame(vess, Temp, PH, Type,NMA)
+head(GLSDdata,10)
+
+
+```
+```{r}
+# (a)construct the ANOVA table for the above design.
+myGLSD <- aov(NMA ~ vess+Temp+PH+Type, GLSDdata)
+summary(myGLSD)
+```
+```{r}
+#plot the results
+plot(myGLSD)
+```
+
+```{r}
+#(b)Formally test to determine if temperature affects the growth
+  #if it does, what temperature result in significantly different growth?
+#multiple comparsion using TukeyHSD function
+myTukeyTemp <- TukeyHSD(myGLSD,"Temp")
+myTukeyTemp
+```
+```{r}
+#(c)Formally test to determine if algae type affects the growth.
+  #if it does, what algae type result in significantly different growth?
+myTukeyType <- TukeyHSD(myGLSD,"Type")
+myTukeyType
+```
+```{r}
+#(d)Formally test to determine if pH affects the growth
+  #if it does what pH levels results in significantly different growth?
+myTukeyPH <- TukeyHSD(myGLSD,"PH")
+myTukeyPH
+```
+```{r}
+#(e)Formally test to determine if the size of vessel affects the growth?
+  #if it does, what vessel sizes produce significantly different results?
+myTukeyVess <- TukeyHSD(myGLSD,"vess")
+myTukeyVess
+```
+
+### Q2
+```{r}
+# create data.frame
+# two factors, three levels, and two replicates
+
+YieldCP=c(90.4,90.2,90.1,90.3,90.5,90.7,90.7,90.6,90.5,90.6,90.8,90.9,90.2,90.4,89.9,90.1,90.4,90.1)
+Tempe_B= gl(n = 3,k=2,length = 18,labels = c(150,160,170))# 3 levels and 2 rows
+Pres_A= gl(n = 3,k=6,length = 18,labels = c(200,215,230))# 3 levels and 6 rows
+d=data.frame(YieldCP,Tempe_B,Pres_A)
+head(d,10)
+```
+
+```{r}
+# (a)Analyze the data and draw conclusions, alpha = 0.05
+# create ANOVA table by using aov function 
+av1=aov(YieldCP~ Pres_A*Tempe_B) # factor and A, B and interaction A*B
+summary(av1)
+```
+
+```{r}
+# find the model without interaction
+av2 <- aov(YieldCP ~ Pres_A + Tempe_B)
+summary(av2)
+```
+
+
+```{r}
+# (b)Prepare aoorioruate residual plots and comment on the models's adequacy
+#plot residuals and QQ plot
+#par(mfrow=c(2,2))
+plot(av1)
+### the plot shows the residuals are stay closed in the normal line and no pattern in fitted values
+### 
+```
+```{r}
+# interaction plot
+interaction.plot(x.factor = Pres_A,trace.factor = Tempe_B,response = YieldCP,fun = mean)
+```
+
+```{r}
+# (c)Under what conditions would you operate this process?
+### the interation plot suggests that set pressure at 215 and temperature 170 degree will 
+### gives you the highest  yield.
+### since the both factors are quantitative, we can perform the linear regression
+### the ANOVA shows that no interation significant
+m1 <- lm(YieldCP ~ Pres_A+Tempe_B, data=d)
+summary(m1)
+```
+
+```{r}
+plot(m1)
+```
+
