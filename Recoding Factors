@@ -6,3 +6,5 @@ recodingdemographicFACTORS <- MASTER_CRSCSE_allcourse_tier %>%
   mutate(ETHNICITY_recode2 = ifelse(ETHNICITY=="White","White","Non_White")) %>% 
   mutate(ETHNICITY_recode3 = ifelse(ETHNICITY=="White","White",ifelse(ETHNICITY=="African American"|
                                                                         ETHNICITY=="Hispanic","AAH","OTHERS")))
+Majorrecoding <- recodingdemographicFACTORS %>% 
+  mutate(ENTRY_DEPARTMENT.recode1=ifelse(ENTRY_COLLEGE=="HMCSE"&ENTRY_DEPARTMENT=="Biology","Biology","Others"))
