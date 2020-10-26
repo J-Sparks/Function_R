@@ -1,0 +1,12 @@
+round(prop.table(table(MASTER_CRSCSE_allcourse_tier$ENTRY_COLLEGE)), digits = 2)
+tb1 <- table(MASTER_CRSCSE_allcourse_tier$ENTRY_COLLEGE)
+cbind(tb1,prop.table(tb1))
+tblFun <- function(x){
+    tbl <- table(x)
+    res <- cbind(tbl,round(prop.table(tbl)*100,2))
+    colnames(res) <- c('Count','Percentage')
+    res
+}
+
+do.call(rbind,lapply(MASTER_CRSCSE_allcourse_tier[28],tblFun))
+
