@@ -1,0 +1,4 @@
+recodingdemographicFACTORS <- MASTER_CRSCSE_allcourse_tier %>% 
+  filter(ENTRY_COLLEGE=="COB" | ENTRY_COLLEGE=="HMCSE"|ENTRY_COLLEGE=="UKCOH") %>% 
+  mutate(TIER_THREE <- ifelse(APPLICANT_TIER>=4,3,ifelse(APPLICANT_TIER==3,2,1))) %>% 
+  mutate(ETHNICITY <- ifelse(ETHNICITY=="White","White",ifelse(ETHNICITY=="African American", "AA", ifelse(ETHNICITY=="Asian","Asian", ifelse(ETHNICITY=="Hispanic","HSP", ifelse(ETHNICITY=="Two or More","TM","OTHERS"))))))
