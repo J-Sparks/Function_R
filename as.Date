@@ -1,0 +1,19 @@
+library(tidyr)
+df.day <- degspring2020$Deg_TermGranted
+sepdf.day <- separate(degspring2020, col=Deg_TermGranted, into = c("gradu.year", "gradu.month"), 5)
+alltestdaty <- paste(degspring2020$Deg_TermGranted,degspring2020$endDay, sep = '', collapse = "-")
+library(lubridate)
+test2 <- as.character(degspring2020$Deg_TermGranted)
+test4 <- as.Date.character(df.day, format = "%Y%b");head(test4,10)
+test3 <- paste0("01", test2);head(test3,10)
+thisDate <- if(nchar(test2) == 7){
+  paste0("0",thisDate)
+}
+ymd(test2)
+#paste data in the data
+month <- as.character("2009-02")
+month1 <- as.Date(paste(month, "-01",sep = ""));month1
+library(zoo)
+month3 <- "2000-03"
+month4 <- as.Date(as.yearmon(month3));month4 # give you 01 days
+
