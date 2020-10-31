@@ -1,0 +1,98 @@
+---
+title: "Early Warning (EW) Rate and Lab Schedule - MAC1147(Lab) Fall 2020"
+author: "Jay Sparks"
+date: "10/29/2020"
+output: powerpoint_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+require(mosaic)   # Load additional packages here 
+library(dplyr)
+library(Hmisc)
+library(ggplot2)
+knitr::opts_chunk$set(
+  tidy=FALSE,     # display code as typed
+  size="large")   # slightly smaller font for code
+```
+
+## R Markdown
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+## Slide with R Output
+#### Find the early warning rates using numbers of registerd FTIC and numbers of EW FTIC 
+#### and determine the effect of the EW rates.
+
+
+1. Data description
+  + FTIC 2020 
+  + Lists of courses of EW (check point 2)
+  + Section numbers
+  + Numbers of FTIC for each section
+  + Numbers of EW FTIC for each section
+
+## Top 20 EW courses for Fall 2020
+
+```{r cars, echo = TRUE}
+EWall_lists_courses <- read.csv("G:/My Drive/EW/EW_aveAPR_FTIC2020_lists_all.csv", stringsAsFactors=TRUE) %>%
+   filter(AlertR1 != "NoEW" ) %>% 
+  group_by(Course.Number.x  ) %>% 
+  summarise(Count_EW=n(), .groups='drop') %>%
+  ungroup() %>% 
+  arrange(-Count_EW)
+EWtop20 <- EWall_lists_courses[1:20,]
+
+knitr::kable(EWtop20)
+```
+
+## Slide with Plot
+
+```{r pressure}
+MAC1147 <- read.csv("G:/My Drive/EW/EW_aveAPR_FTIC2020_lists_all.csv", stringsAsFactors=TRUE) %>%
+   filter(Course.Number.x == "MAC1147" ) %>% 
+  group_by(Course.Number.x,Section.Name) %>% 
+  summarise(Count_EWFTIC=n(), .groups='drop') %>%
+  ungroup() %>% 
+  arrange(Section.Name)
+knitr::kable(MAC1147)
+```
+```{r}
+MAC1147$Registered_Number <- c(20, 18,21,19,21,15,21,21,21,21,22,22,18,10,23,23)
+MAC1147$Lab_Day <- factor(c("FRI","FRI","FRI","FRI","FRI","FRI","FRI","FRI","FRI","FRI","FRI","THU","FRI","FRI","THU","THU"))
+MAC1147$Lab_Star_Time <- factor(c("8am","10am","12:30pm","2:30pm","8am","10am","12:30pm","3pm","8am","10am","12:30pm","2:30pm","8am","2pm","11:30am","1:45pm"))
+MAC1147$AMPM <- factor(c("AM","AM","PM","PM","AM","AM","PM","PM","AM","AM","PM","PM","AM","PM","AM","PM"))
+MAC1147$Rate_EW <- round((MAC1147$Count_EWFTIC/MAC1147$Registered_Number), digits = 4)
+head(MAC1147[,2:8])
+```
+```{r}
+summary(MAC1147)
+Total_Registed <- sum(MAC1147$Registered_Number);Total_Registed
+```
+```{r}
+
+ggplot(data=MAC1147, aes(x=Registered_Number, y= Rate_EW, color= Lab_Day)) + geom_point(size=3)+
+  labs(title= "Early Warning Rate and FTIC 2020",
+       subtitle = "Source IR/EW 2020")
+```
+```{r}
+MAC1147rate <- MAC1147 %>% 
+  group_by(Lab_Day) %>% summarise(meanEW_Rate = mean(Rate_EW), .groups="drop");MAC1147rate
+```
+
+### Find a model to predict the EW rate using size of class, lab times, and days
+###The results suggest that the Thursday lab has a significant effect on the EW rate.
+###The p-value is 0.1898658 and more details are below.
+```{r}
+library(broom)
+model1 <- lm(Rate_EW ~ Registered_Number + Lab_Star_Time + Lab_Day , data= MAC1147);mtab <- tidy(model1)
+knitr::kable(mtab)
+```
