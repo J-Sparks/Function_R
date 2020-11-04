@@ -1,0 +1,167 @@
+---
+title: "R Notebook"
+output:
+  html_document:
+    df_print: paged
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+## libraries to get COVID 19
+```{r }
+setwd("G:/My Drive/R_learning")
+library(covid19.analytics)
+library(dplyr)
+library(prophet)
+library(lubridate)
+library(ggplot2)
+
+```
+## data import ratest covid data
+```{r}
+#tscall <- covid19.data("ALL");head(tscall,5)
+```
+## confirm data
+```{r}
+tsc<- covid19.data(case = "ts-confirmed")
+tsc <- tsc %>% filter(Country.Region=="US")
+```
+## transfer the data
+```{r}
+tsc <- data.frame(t(tsc))
+```
+## colnames
+```{r}
+tsc <- cbind(rownames(tsc), data.frame(tsc, row.names=NULL))
+colnames(tsc) <- c("Date","Confirmed");tsc <-  tsc[-c(1:4),];head(tsc,10)
+tsc$Date <- ymd(tsc$Date);tail(tsc,10)
+```
+##plot
+```{r}
+tsc$Confirmed <- as.numeric(tsc$Confirmed)
+qplot( Date, Confirmed, data= tsc, main = " Covid19 confirmed cases in USA - Octorber 31 2020")
+```
+##plot Forcasting
+###Disabling yearly seasonality. Run prophet with yearly.seasonality=TRUE to override this.
+###Disabling daily seasonality. Run prophet with daily.seasonality=TRUE to override this
+```{r}
+ds <- tsc$Date
+y <-  tsc$Confirmed
+View(df)
+library(dplyr)
+df <- data.frame(ds, y)
+m <- prophet(df) 
+```
+# Forcasting
+```{r}
+future <- make_future_dataframe(m, periods = 56)
+forcaset <- predict(m, future)
+plot(m, forcaset)
+dyplot.prophet(m, forcaset)
+
+```
+## forcast component ( data is not reality so the Friday does not mean that the highest risk day)
+```{r}
+prophet_plot_components(m, forcaset)
+
+
+
+```
+## model performance
+```{r}
+pred <- forcaset$yhat[1:284]
+actual <- m$history$y
+plot(actual, pred)
+abline(lm(pred~actual),col="red")
+summary(lm(pred~actual))
+```
+# SIR Modeling in r
+
+```{r}
+ag <- covid19.data(case = "aggregated")
+tscc <- covid19.data(case = "ts-confirmed")
+
+```
+## summary plot
+```{r}
+
+report.summary(Nentries = 10, graphical.output = F)
+
+```
+##summary plot2 pie chart and bar graph
+```{r}
+report.summary(Nentries = 10, graphical.output = T)
+
+
+```
+##total per location
+```{r}
+
+tots.per.location(tscc, geo.loc = c("US", "India"))
+
+
+```
+## Growth rate
+```{r}
+growth.rate(tscc, geo.loc = "US")
+
+
+```
+## totals plot
+```{r}
+tscall <- covid19.data(case = "ts-ALL")
+totals.plt(tscall, c("India"))
+
+
+```
+
+## World map
+```{r}
+live.map(tscc)
+
+
+```
+## SIR Model
+
+```{r}
+generate.SIR.model(tscc, "US", tot.population = 328200000)
+
+
+
+```
+```{r}
+generate.SIR.model(tscc, "India", tot.population = 1353000000)
+```
+## SIR modeling mathematical algorithm
+```{r}
+SIR = function( N,S,I,R,b,g){
+  su=c()
+  inf=c()
+  rec=c()
+  for (i in 1:100){
+    dS=b*S*I/N
+    S=S-dS
+    I=I+dS-g*I
+    R=R+g*I
+    su=c(su,S)
+    inf=c(inf,I)
+    rec=c(rec,R)
+    
+  }
+
+
+plot(c(0,100),c(0,N),type="n", xlab="Time",ylab="Number",main="SIR Model")
+lines(su,col="blue")
+lines(inf,col="red")
+lines(rec, col="green")
+}
+
+#################
+SIR(100,99,1,1.9,0.6,0.3)
+```
+```{r}
+df$ds
+```
+
+
