@@ -1,0 +1,34 @@
+unique(FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded)
+# [1] "C"  "C-" "B"  "A"  "A-" "B+" "C+" "D"  "D+" "XX" "W"  "F"  "B-" "NF" "I*" "I"  "P"  "S" 
+
+FTIC_Fall_semester_all_CRS$GradePoints <- FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="A", "GradePoints"] <- 4.0
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="A-", "GradePoints"] <- 3.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B+", "GradePoints"] <- 3.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B", "GradePoints"] <- 3.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B-", "GradePoints"] <- 2.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C", "GradePoints"] <- 2.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C+", "GradePoints"] <- 2.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C-", "GradePoints"] <- 1.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="D", "GradePoints"] <- 1.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="D+", "GradePoints"] <- 1.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="F", "GradePoints"] <- 0.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="NF", "GradePoints"] <- 0.00
+attach(FTIC_Fall_semester_all_CRS)
+my_no_grade <- c("S","P","XX","I","I*","W")
+FTIC_Fall_semester_all_CRS_na <- FTIC_Fall_semester_all_CRS3 %>% filter(GradePoints %in% my_no_grade)# filter for no grades
+#combined with grades group
+
+
+
+
+#library(naniar)
+#makeNA <- function(x) str_replace(x, "P", NA_character_)
+#FTIC_Fall_semester_all_CRS3 <- FTIC_Fall_semester_all_CRS %>%  replace_with_na_all()
+
+FTIC_Fall_semester_all_CRS3 <- FTIC_Fall_semester_all_CRS 
+#FTIC_Fall_semester_all_CRS3 %>% replace(FTIC_Fall_semester_all_CRS3$GradePoints, FTIC_Fall_semester_all_CRS$GradePoints %in% my_no_grade, "99")
+#str(FTIC_Fall_semester_all_CRS3)
+GradePoints1 <- sapply(FTIC_Fall_semester_all_CRS3[,36], function(x) replace(x, x %in% c("S","P","XX","I","I*","W"), 99))
+FTIC_Fall_semester_all_CRS$GradePoints1 <-GradePoints1
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded=="XX", 30:37]
