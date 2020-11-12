@@ -1,0 +1,121 @@
+
+
+  ### Merge all fall semesters information and create index that not include summer term
+FTIC_all_semesterFall <- merge(enrspring2020, enr, by="STU_ID", all.x = TRUE ) %>% 
+  #filter(Stu_AdmissionRecentTypeCode == "B") %>% 
+   filter(str_detect(.$Stu_Term , "Fall")) %>%  # No summer terms
+   group_by(STU_ID) %>%  arrange(Stu_DEMO_TIME_FRAME, .by_group=TRUE) %>% 
+  mutate(number_semester=row_number()) %>% 
+  select(1:5,contains("ethnicity"),contains("gender"),contains("county"),contains("Nation"),contains("college"),contains("Department"),contains("type"),contains("Semester"),contains("term"),contains("CIP"),contains("GPA"),
+         contains("Hour"),contains("Insti"),contains("Major"),Cohort,number_semester)
+
+
+FTIC_all_semesterFall$Term = rep("Fall") 
+
+FTIC_all_semesterSpring <- merge(enrspring2020, enr, by="STU_ID", all.x = TRUE ) %>% 
+  #filter(Stu_AdmissionRecentTypeCode == "B") %>% 
+   filter(str_detect(.$Stu_Term , "Spring")) %>%  # No summer terms
+   group_by(STU_ID) %>%  arrange(Stu_DEMO_TIME_FRAME, .by_group=TRUE) %>% 
+  mutate(number_semester=row_number()) %>% 
+  select(1:5,contains("ethnicity") ,contains("gender"),contains("county"),contains("Nation"), contains("college"),contains("Department"),contains("type"),contains("Semester"),contains("term"),contains("CIP"),contains("GPA"),
+         contains("Hour"),contains("Insti"),contains("Major"),Cohort,number_semester)
+    
+FTIC_all_semesterSpring$Term = rep("Spring") 
+
+
+FTIC_all_semesterSummer <- merge(enrspring2020, enr, by="STU_ID", all.x = TRUE ) %>% 
+  #filter(Stu_AdmissionRecentTypeCode == "B") %>% 
+   filter(str_detect(.$Stu_Term , "Summer")) %>%  # No summer terms
+   group_by(STU_ID) %>%  arrange(Stu_DEMO_TIME_FRAME, .by_group=TRUE) %>% 
+  mutate(number_semester=row_number()) %>% 
+  select(1:5,contains("ethnicity") ,contains("gender"),contains("county"), contains("Nation"),contains("college"),contains("Department"),contains("type"),contains("Semester"),contains("term"),contains("CIP"),contains("GPA"),
+         contains("Hour"),contains("Insti"),contains("Major"),Cohort,number_semester)
+    
+FTIC_all_semesterSummer$Term = rep("Summer") 
+
+FTIC_all_semester <- rbind(FTIC_all_semesterFall,FTIC_all_semesterSpring,FTIC_all_semesterSummer)
+### FTIC filter with first term only
+enr<- read.csv("G:/Shared drives/HMCSE-PAM Lab/DATA 202001/STU_ENROLLMENT_SPRING20.csv")
+enrspring2020 <- read.csv("G:/Shared drives/HMCSE-PAM Lab/DATA 202001/STU_ENROLLMENT_SPRING20.csv") %>% 
+  filter(Stu_LoadIPEDSFTPT=="Full Time" & # full time
+             Stu_StudentTypeCode =="B" &
+           Stu_AdmissionRecentTypeCode=="B" & Stu_DEMO_TIME_FRAME >= 200805 ) %>% # data quality since 2008
+  group_by(STU_ID) %>% 
+  filter(str_detect(Stu_Term, c("Fall..."))) %>% 
+  separate(Stu_AdmissionTerm, into = c("Term","Cohort"),sep=" ") %>% 
+  select(1,Stu_TermDate,Cohort) %>% filter(Cohort >= 2008)
+  xtabs(~enrspring2020$Cohort )
+  
+  
+  
+  
+  
+  
+FTIC_all_semester1  <- FTIC_all_semester %>%  group_by(STU_ID) %>%  arrange(Stu_DEMO_TIME_FRAME, .by_group=TRUE) %>% 
+  mutate(Total_number_semester=row_number())
+
+xtabs(~FTIC_all_semester1$Cohort+FTIC_all_semester1$Term)
+  
+  
+FTIC_Fall_semester2 <- FTIC_all_semester1 %>% filter(Term == "Fall") %>% select(1:3,contains("ethnicity") ,contains("gender"), contains("Nation"),number_semester,contains("College"),contains("county"), contains("department"),Stu_Department,contains("Major"),contains("HighSchool"),contains("Total"),Stu_TotalInstHours,Stu_GPAUndergraduateTerm,Stu_GPATermHours,Stu_CurrentTermLoad,Stu_GPASemester, contains("gradepoint")) %>% 
+  mutate(GPAT1= Stu_GPAGradePoints/Stu_GPATermHours) %>% mutate(diffGPAt1=round(GPAT1-Stu_GPAUndergraduateTerm, digits = 2))
+
+
+# fitler the first fall 
+FTIC_Fall_semester3 <- select(FTIC_Fall_semester2,-Total_number_semester) %>% filter(Cohort >= 2015 & number_semester == 1) ;glimpse(FTIC_Fall_semester3)
+my_id_3from3 <- FTIC_Fall_semester3 %>%  select(1:3) %>% group_by(STU_ID)
+
+my_id_crs <- COURSE_STUDENT_INSTRUCTION_SPRING20 %>%  select(1,5,"Course_CrsCombined","Course_CrsGradeAwarded", contains("credit"))
+
+FTIC_frist_crs <- merge(my_id_3from3,my_id_crs, by.x=c("STU_ID", "Stu_TermDate.x"), by.y=c("STU_ID","Course_TermDate"), all.x = T)
+#check duplication
+library(tidyverse)
+FTIC_frist_crs_nodup <- FTIC_frist_crs %>% distinct(STU_ID,Stu_TermDate.x,Course_CrsCombined, Course_CrsGradeAwarded,  .keep_all = T)
+FTIC_frist_crs_keep <- FTIC_frist_crs_nodup %>% select(1:7) %>% group_by(STU_ID) %>% mutate(Number_Crs=row_number());FTIC_frist_crs_keep[1:10,]
+length(unique(FTIC_frist_crs_keep$Number_Crs)) # all first term courses
+
+# merge with orig data
+FTIC_Fall_semester_all_CRS <- merge(FTIC_Fall_semester3, FTIC_frist_crs_keep, by="STU_ID", all.y = T)# this is FTCI 2015-2019 with first term GPA and CRS info
+
+```
+
+This is GradePoint  in data set
+http://naniar.njtierney.com/articles/replace-with-na.html
+```{r}
+unique(FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded)
+# [1] "C"  "C-" "B"  "A"  "A-" "B+" "C+" "D"  "D+" "XX" "W"  "F"  "B-" "NF" "I*" "I"  "P"  "S" 
+
+FTIC_Fall_semester_all_CRS$GradePoints <- FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="A", "GradePoints"] <- 4.0
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="A-", "GradePoints"] <- 3.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B+", "GradePoints"] <- 3.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B", "GradePoints"] <- 3.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="B-", "GradePoints"] <- 2.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C", "GradePoints"] <- 2.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C+", "GradePoints"] <- 2.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="C-", "GradePoints"] <- 1.70
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="D", "GradePoints"] <- 1.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="D+", "GradePoints"] <- 1.30
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="F", "GradePoints"] <- 0.00
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$GradePoints=="NF", "GradePoints"] <- 0.00
+attach(FTIC_Fall_semester_all_CRS)
+my_no_grade <- c("S","P","XX","I","I*","W")
+FTIC_Fall_semester_all_CRS_na <- FTIC_Fall_semester_all_CRS3 %>% filter(GradePoints %in% my_no_grade)# filter for no grades
+#combined with grades group
+
+
+
+
+#library(naniar)
+#makeNA <- function(x) str_replace(x, "P", NA_character_)
+#FTIC_Fall_semester_all_CRS3 <- FTIC_Fall_semester_all_CRS %>%  replace_with_na_all()
+
+FTIC_Fall_semester_all_CRS3 <- FTIC_Fall_semester_all_CRS 
+#FTIC_Fall_semester_all_CRS3 %>% replace(FTIC_Fall_semester_all_CRS3$GradePoints, FTIC_Fall_semester_all_CRS$GradePoints %in% my_no_grade, "99")
+#str(FTIC_Fall_semester_all_CRS3)
+GradePoints1 <- sapply(FTIC_Fall_semester_all_CRS3[,36], function(x) replace(x, x %in% c("S","P","XX","I","I*","W"), 99))
+FTIC_Fall_semester_all_CRS$GradePoints1 <-GradePoints1
+FTIC_Fall_semester_all_CRS$Pass <- ifelse(FTIC_Fall_semester_all_CRS$GradePoints1 >= 1.7 | FTIC_Fall_semester_all_CRS$GradePoints1 < 99, 1,0 )
+ FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$Pass == 1 & FTIC_Fall_semester_all_CRS$GradePoints1 ==99, "Pass"] <- NA
+FTIC_Fall_semester_all_CRS[FTIC_Fall_semester_all_CRS$Course_CrsGradeAwarded=="A", 30:38]
+# completed data is "FTIC_Fall_semester_all_CRS"
