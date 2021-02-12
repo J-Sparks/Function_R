@@ -1,0 +1,65 @@
+---
+title: "Prerequisite_MAC2311"
+author: "JS"
+date: "1/27/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readr)
+CRS_ALL_up2020 <- read_csv("G:/Shared drives/HMCSE-PAM Lab/Jay's Space/Data_IR_2020/CRS_ALL_up2020.csv", 
+    col_types = cols(X1 = col_skip()))
+```
+
+# Filter for MAC 2311,2312, and 2313 course 
+## Create index for number of MAC.. course and number of repeated
+
+```{r}
+library(dplyr)
+MAC <- CRS_ALL_up2020 %>% filter(stringr::str_detect(.$COURSE_NAME, "MAC")) %>% group_by(UNIV_ROW_ID) %>% arrange(DEMO_TIME_FRAME) %>% mutate(Number_MAC=row_number()) %>% group_by(UNIV_ROW_ID,COURSE_NAME) %>%  mutate(Number_repeats=row_number())
+#write.csv(MAC, "MAC_pre.csv")
+
+xtabs(~MAC$COURSE_NAME+ MAC$Number_repeats)
+```
+
+### Numbers of DWFs by Course Name
+```{r}
+xtabs(~MAC$COURSE_NAME+MAC$DWFIUNG1)
+```
+
+### Numbers of passed MAC2311 by Prerequisites
+
+```{r}
+MAC_2311 <- MAC[MAC$COURSE_NAME=="MAC2311",] %>% group_by(UNIV_ROW_ID) %>% arrange(DEMO_TIME_FRAME) %>% select(1:10) %>%  mutate(Numbers_MAC2311=row_number()) %>% filter(Numbers_MAC2311 ==1)# choose the first MAC2311
+not_MAC231123 <- MAC %>% filter(COURSE_NAME !="MAC2311" & COURSE_NAME !="MAC2312" & COURSE_NAME !="MAC2313")
+MAC_2312 <- MAC[MAC$COURSE_NAME=="MAC2312",]
+MAC_2313 <- MAC[MAC$COURSE_NAME=="MAC2313",]
+MAC_1105 <- MAC[MAC$COURSE_NAME=="MAC1105",]
+MAC_1105C <- MAC[MAC$COURSE_NAME=="MAC1105C",]
+MAC_1114 <- MAC[MAC$COURSE_NAME=="MAC1114",]
+MAC_1140 <- MAC[MAC$COURSE_NAME=="MAC1140",]
+MAC_1147 <- MAC[MAC$COURSE_NAME=="MAC1147",]
+MAC_1990 <- MAC[MAC$COURSE_NAME=="MAC1990",]
+MAC_2233 <- MAC[MAC$COURSE_NAME=="MAC2233",]
+
+MAC2311_pre <- merge(MAC_2311[,c(1:11)], not_MAC231123[,c(1:10)], by="UNIV_ROW_ID", all.x = T) %>% 
+  group_by(UNIV_ROW_ID) %>% arrange(DEMO_TIME_FRAME.y)
+ MAC2311_pre_nodup <- MAC2311_pre[!duplicated(MAC2311_pre),] %>%group_by(UNIV_ROW_ID) %>% arrange(COURSE_NAME.y) %>% mutate(Numbers_premac=row_number())
+xtabs(~MAC2311_pre_nodup$COURSE_NAME.y +MAC2311_pre_nodup$DWFIUNG1.x)
+```
+### MAC2311 Passed/Failed by prerequisite course cases
+```{r}
+myMAC2311_premac <- data.table::setDT(MAC2311_pre_nodup[,c(1,9,14,20)])[, lapply(.SD, paste, collapse=" "), by="UNIV_ROW_ID"]
+myMAC2311_premac$MAC2311Earned <- substr(myMAC2311_premac$DWFIUNG1.x, start = 1, stop = 3) 
+write.csv(myMAC2311_premac,"MAC2311_prerequisitedata.csv")
+#glimpse(myMAC2311_premac)                            
+mactab <- table(myMAC2311_premac$COURSE_NAME.y, myMAC2311_premac$MAC2311Earned)                                     
+max1 <- addmargins(mactab)
+dfTabmac <- max1 %>%  as.data.frame.matrix()
+dfTabmac$PrerequisiteCourseCOMBO <- rownames(max1)
+dfTabmac$PssRate <- round(dfTabmac$Yes/dfTabmac$Sum,4)
+dfTabmac[,c(3,1,2,4,5)]
+#write.csv(dfTabmac,"MAC2311PASS_COMBO.csv")
+```
+
