@@ -1,0 +1,9 @@
+### To get an APR Rate by program
+
+tab_PROGRAMcode <- addmargins(table(HSGPAunder3.5_DF$codePROGRAM1, HSGPAunder3.5_DF$APR))
+DF_tab_PROGRAMcode <- as.data.frame.matrix(tab_PROGRAMcode)
+DF_tab_PROGRAMcode$codePROGRAM1 <- rownames(tab_PROGRAMcode)
+DF_tab_PROGRAMcode <- DF_tab_PROGRAMcode %>% filter(codePROGRAM1 != "Sum")
+DF_tab_PROGRAMcode$APRRATE_PROGRAM <- round( DF_tab_PROGRAMcode$Yes/DF_tab_PROGRAMcode$Sum*100,4)
+HSGPAunder3.5_dataset_rate3 <- merge(DF_tab_PROGRAMcode,HSGPAunder3.5_dataset_rate2, by.x="codePROGRAM1",by.y="codePROGRAM1", all=T)
+write.csv(HSGPAunder3.5_dataset_rate3,"HSGPAunder3.5_dataset_rate3.csv")
