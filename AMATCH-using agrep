@@ -1,0 +1,11 @@
+# how to approximately match with history program with new data 2021
+
+PROGRAMNAME_2021$NEW_PROGRAM<- NA # create empty col
+ for (i in 1:dim(PROGRAMNAME_2021) [1]) {
+  x <-  agrep(PROGRAMNAME_2021$PROGRAM_DESC[i], HIST_APR_PROGRAM$ENTRY_PROGRAM,
+              ignore.case = TRUE, value = TRUE,
+              max.distance = 0.05, useBytes = TRUE)
+  x <-  paste0(x, "")
+  PROGRAMNAME_2021$NEW_PROGRAM [i] <- x
+  
+ }
