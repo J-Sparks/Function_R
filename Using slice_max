@@ -1,0 +1,32 @@
+################################################
+##### Before slice by chort, we need to fill the NA for the columns to slice
+#################################################
+##### how to filter max or min within groups
+################
+
+
+# method 1
+Max_index <- Final_acex_enc_DF %>%   group_by(uwfid) %>%  top_n(1, Index) # choose max index by uwfid
+Max_index$B_deg <- ifelse(Max_index$Deg_Desc=="Bachelor",1,0)
+Max_index[which(is.na(Max_index$B_deg)), "B_deg"] <- 0
+Max_index <- Max_index %>% mutate(leftUWF=ifelse(B_deg ==1, "Bachelor" ,
+                                                 ifelse((B_deg==0 & Stu_DEMO_TIME_FRAME != 202008), "Dropped", "Stayed")))
+table(Max_index$Cohort,Max_index$leftUWF)
+# method 2
+
+library(data.table)
+Max_index1 <- setDT(Final_acex_enc_DF)[ , .SD[which.max(Stu_DEMO_TIME_FRAME)], by=uwfid]
+xtabs(~Max_index1$cohort_year + Max_index1$Index)
+
+# method 3
+Max_index_2 <- Final_acex_enc_DF %>% filter(Index==1) %>% group_by(cohort_year, Deg_Desc) %>%  dplyr::summarise(Count=n())
+Max_index_2
+
+#method 4 using slice_min()
+
+Max_index_usingslicemax <- Final_acex_enc_DF %>% group_by(uwfid) %>% arrange(Stu_DEMO_TIME_FRAME, .by_group=T) %>% 
+  slice_max(Index, n=1)
+colSums(is.na(Final_acex_enc_DF))
+NA_625 <- Final_acex_enc_DF[which(is.na(Final_acex_enc_DF$cohort_year)),]
+#check
+xtabs(~Max_index_usingslicemax$cohort_year)
